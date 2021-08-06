@@ -1,0 +1,52 @@
+<?php
+header('Access-Control-Allow-Origin: *');
+header('Content-Type: application/json');
+header('Access-Control-Allow-Methods: POST');
+header('Access-Control-Allow-Headers: * ');
+
+
+class RegisterM
+{
+    public $table = "users";
+    public $conn;
+    public function __construct()
+    {
+        $this->conn = new Database();
+    }
+
+    public function uniqidReal($lenght = 7)
+    {
+        if (function_exists("random_bytes")) {
+            $bytes = random_bytes(ceil($lenght / 2));
+        } elseif (function_exists("openssl_random_pseudo_bytes")) {
+            $bytes = openssl_random_pseudo_bytes(ceil($lenght / 2));
+        } else {
+            throw new Exception("no cryptographically secure random function available");
+        }
+        return substr(bin2hex($bytes), 0, $lenght);
+    }
+
+    public function insert($data)
+    {
+
+        if (!empty($data->fullName)  && !empty($data->Email) && !empty($data->tel)) {
+
+            $query = "INSERT INTO $this->table(Reference,fullName,Email,tel) VALUES(:Reference,:fullName,:Email,:tel)";
+            $ref = strtoupper($this->uniqidReal());
+            $this->conn->query($query);
+
+
+            $this->conn->bind(":Reference", $ref);
+            $this->conn->bind(":fullName", $data->fullName);
+            $this->conn->bind(":Email", $data->Email);
+            $this->conn->bind(":tel", $data->tel);
+
+
+            if ($this->conn->execute())
+                return ["ref" => $ref, "name" => $data->fullName];
+            return false;
+        } else {
+            return "empty";
+        }
+    }
+}
